@@ -30,6 +30,7 @@ type Config struct {
 const (
 	envKey          = "ENV"                   // Environment variable key for the environment name.
 	portEnv         = "PORT"                  // Environment variable key for the server port.
+	frontEndKey     = "FRONTEND_URL"          // Environment variable key for the frontend URL.
 	authServiceKey  = "AUTH_SERVICE_URL"      // Environment variable key for the authentication service URL.
 	dashboardKey    = "DASHBOARD_SERVICE_URL" // Environment variable key for the dashboard service URL.
 	jwtSecretKey    = "JWT_SECRET"            // Environment variable key for the JWT secret.
@@ -58,7 +59,7 @@ func Load() (Config, error) {
 		return Config{}, errors.New("empty key")
 	}
 
-	c.FrontendURL = getEnv("FRONTEND_URL")
+	c.FrontendURL = getEnv(frontEndKey)
 	if c.FrontendURL == "" {
 		return Config{}, errors.New("empty key")
 	}
