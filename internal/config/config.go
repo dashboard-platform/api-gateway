@@ -18,23 +18,23 @@ import (
 // It contains environment-specific settings such as the environment name,
 // server port, JWT secret, and database URL.
 type Config struct {
-	Env                 string // The current environment (e.g., "dev", "prod").
-	Port                string // The port on which the server will run.
-	FrontendURL         string // The URL of the frontend application.
-	AuthServiceURL      string // The URL of the authentication service.
-	DashboardServiceURL string // The URL of the dashboard service.
-	JWTSecret           []byte // The secret key used for signing JWT tokens.
-	CookieSecure        bool   // The secure flag for cookies (true for HTTPS, false for HTTP).
+	Env                string // The current environment (e.g., "dev", "prod").
+	Port               string // The port on which the server will run.
+	FrontendURL        string // The URL of the frontend application.
+	AuthServiceURL     string // The URL of the authentication service.
+	TemplateServiceURL string // The URL of the dashboard service.
+	JWTSecret          []byte // The secret key used for signing JWT tokens.
+	CookieSecure       bool   // The secure flag for cookies (true for HTTPS, false for HTTP).
 }
 
 const (
-	envKey          = "ENV"                   // Environment variable key for the environment name.
-	portEnv         = "PORT"                  // Environment variable key for the server port.
-	frontEndKey     = "FRONTEND_URL"          // Environment variable key for the frontend URL.
-	authServiceKey  = "AUTH_SERVICE_URL"      // Environment variable key for the authentication service URL.
-	dashboardKey    = "DASHBOARD_SERVICE_URL" // Environment variable key for the dashboard service URL.
-	jwtSecretKey    = "JWT_SECRET"            // Environment variable key for the JWT secret.
-	cookieSecureKey = "COOKIE_SECURE"         // Environment variable key for the secure flag of cookies.
+	envKey             = "ENV"                  // Environment variable key for the environment name.
+	portEnv            = "PORT"                 // Environment variable key for the server port.
+	frontEndKey        = "FRONTEND_URL"         // Environment variable key for the frontend URL.
+	authServiceKey     = "AUTH_SERVICE_URL"     // Environment variable key for the authentication service URL.
+	templateServiceKey = "TEMPLATE_SERVICE_URL" // Environment variable key for the dashboard service URL.
+	jwtSecretKey       = "JWT_SECRET"           // Environment variable key for the JWT secret.
+	cookieSecureKey    = "COOKIE_SECURE"        // Environment variable key for the secure flag of cookies.
 
 	defaultEnvKey = "dev" // Default environment name if none is provided.
 )
@@ -69,8 +69,8 @@ func Load() (Config, error) {
 		return Config{}, errors.New("empty key")
 	}
 
-	c.DashboardServiceURL = getEnv(dashboardKey)
-	if c.DashboardServiceURL == "" {
+	c.TemplateServiceURL = getEnv(templateServiceKey)
+	if c.TemplateServiceURL == "" {
 		return Config{}, errors.New("empty key")
 	}
 

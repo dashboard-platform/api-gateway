@@ -47,7 +47,7 @@ func TestGetEnv(t *testing.T) {
 // It verifies that the function returns a valid configuration when all required environment variables are set
 // and returns an error when any mandatory variable is missing.
 func TestLoad(t *testing.T) {
-	envs := []string{envKey, portEnv, authServiceKey, dashboardKey, jwtSecretKey, cookieSecureKey}
+	envs := []string{envKey, portEnv, authServiceKey, templateServiceKey, jwtSecretKey, cookieSecureKey}
 	for _, env := range envs {
 		os.Setenv(env, "test")
 		defer os.Unsetenv(env)
@@ -60,37 +60,37 @@ func TestLoad(t *testing.T) {
 	}{
 		{
 			name:    "Test Load with all envs set",
-			envs:    []string{envKey, portEnv, authServiceKey, dashboardKey, jwtSecretKey, cookieSecureKey},
+			envs:    []string{envKey, portEnv, authServiceKey, templateServiceKey, jwtSecretKey, cookieSecureKey},
 			wantErr: false,
 		},
 		{
 			name:    "Test Load with missing envKey",
-			envs:    []string{portEnv, authServiceKey, dashboardKey, jwtSecretKey, cookieSecureKey},
+			envs:    []string{portEnv, authServiceKey, templateServiceKey, jwtSecretKey, cookieSecureKey},
 			wantErr: false,
 		},
 		{
 			name:    "Test Load with missing portEnv",
-			envs:    []string{envKey, authServiceKey, dashboardKey, jwtSecretKey, cookieSecureKey},
+			envs:    []string{envKey, authServiceKey, templateServiceKey, jwtSecretKey, cookieSecureKey},
 			wantErr: true,
 		},
 		{
 			name:    "Test Load with missing authServiceKey",
-			envs:    []string{envKey, portEnv, dashboardKey, jwtSecretKey, cookieSecureKey},
+			envs:    []string{envKey, portEnv, templateServiceKey, jwtSecretKey, cookieSecureKey},
 			wantErr: true,
 		},
 		{
-			name:    "Test Load with missing dashboardKey",
+			name:    "Test Load with missing templateServiceKey",
 			envs:    []string{envKey, portEnv, authServiceKey, jwtSecretKey, cookieSecureKey},
 			wantErr: true,
 		},
 		{
 			name:    "Test Load with missing jwtSecretKey",
-			envs:    []string{envKey, portEnv, authServiceKey, dashboardKey, cookieSecureKey},
+			envs:    []string{envKey, portEnv, authServiceKey, templateServiceKey, cookieSecureKey},
 			wantErr: true,
 		},
 		{
 			name:    "Test Load with missing cookieSecureKey",
-			envs:    []string{envKey, portEnv, authServiceKey, dashboardKey, jwtSecretKey},
+			envs:    []string{envKey, portEnv, authServiceKey, templateServiceKey, jwtSecretKey},
 			wantErr: true,
 		},
 		{
