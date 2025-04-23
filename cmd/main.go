@@ -65,6 +65,17 @@ func main() {
 	app.Get("/healthcheck", func(c *fiber.Ctx) error {
 		return c.SendString("api-gateway is alive")
 	})
+	app.Get("/logout", func(c *fiber.Ctx) error {
+		c.Cookie(&fiber.Cookie{
+			Name:     "access_token",
+			Value:    "",
+			Expires:  time.Now().Add(-1 * time.Hour),
+			Secure:   true,
+			HTTPOnly: true,
+			SameSite: "None",
+		})
+		return c.SendStatus(fiber.StatusOK)
+	})
 
 	// Start the HTTP server.
 	log.Info().Msgf("API Gateway started on %s", c.Port)
