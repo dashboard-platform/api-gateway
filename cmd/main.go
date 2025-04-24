@@ -52,6 +52,7 @@ func main() {
 	// Proxy handlers
 	authProxy := proxy.New(c.AuthServiceURL)
 	templatesProxy := proxy.New(c.TemplateServiceURL)
+	pdfProxy := proxy.New(c.PDFServiceURL)
 
 	// JWT object for authentication middleware
 	jwtObj := &middleware.JWTObj{
@@ -61,6 +62,7 @@ func main() {
 	// Routes
 	app.All("/auth/*", authProxy)
 	app.All("/templates/*", middleware.RequireAuth(jwtObj), templatesProxy)
+	app.All("/pdf/*", middleware.RequireAuth(jwtObj), pdfProxy)
 
 	app.Get("/healthcheck", func(c *fiber.Ctx) error {
 		return c.SendString("api-gateway is alive")

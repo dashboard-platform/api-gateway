@@ -23,6 +23,7 @@ type Config struct {
 	FrontendURL        string // The URL of the frontend application.
 	AuthServiceURL     string // The URL of the authentication service.
 	TemplateServiceURL string // The URL of the dashboard service.
+	PDFServiceURL      string // The URL of the PDF service.
 	JWTSecret          []byte // The secret key used for signing JWT tokens.
 	CookieSecure       bool   // The secure flag for cookies (true for HTTPS, false for HTTP).
 }
@@ -33,6 +34,7 @@ const (
 	frontEndKey        = "FRONTEND_URL"         // Environment variable key for the frontend URL.
 	authServiceKey     = "AUTH_SERVICE_URL"     // Environment variable key for the authentication service URL.
 	templateServiceKey = "TEMPLATE_SERVICE_URL" // Environment variable key for the dashboard service URL.
+	pdfServiceKey      = "PDF_SERVICE_URL"      // Environment variable key for the PDF service URL.
 	jwtSecretKey       = "JWT_SECRET"           // Environment variable key for the JWT secret.
 	cookieSecureKey    = "COOKIE_SECURE"        // Environment variable key for the secure flag of cookies.
 
@@ -71,6 +73,11 @@ func Load() (Config, error) {
 
 	c.TemplateServiceURL = getEnv(templateServiceKey)
 	if c.TemplateServiceURL == "" {
+		return Config{}, errors.New("empty key")
+	}
+
+	c.PDFServiceURL = getEnv(pdfServiceKey)
+	if c.PDFServiceURL == "" {
 		return Config{}, errors.New("empty key")
 	}
 
