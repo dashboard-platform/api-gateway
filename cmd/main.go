@@ -40,11 +40,6 @@ func main() {
 
 		//csrf.New(),
 
-		limiter.New(limiter.Config{
-			Max:        20,
-			Expiration: 1 * time.Minute,
-		}),
-
 		// Add custom request logger middleware.
 		middleware.RequestLogger(httpLogger),
 	)
@@ -59,10 +54,34 @@ func main() {
 		Secret: []byte(c.JWTSecret),
 	}
 
+	globalLimiter := limiter.New(limiter.Config{
+		Max:        20,
+		Expiration: 1 * time.Minute,
+	})
+
 	// Routes
-	app.All("/auth/*", authProxy)
-	app.All("/templates/*", middleware.RequireAuth(jwtObj), templatesProxy)
-	app.All("/pdf/*", middleware.RequireAuth(jwtObj), pdfProxy)
+	app.All("/auth/*",
+		globalLimiter,
+		authProxy,
+	)
+	app.Post("/templates/:id/preview",
+		middleware.RequireAuth(jwtObj),
+		limiter.New(limiter.Config{
+			Max:        1000,
+			Expiration: 1 * time.Minute,
+		}),
+		templatesProxy,
+	)
+	app.All("/templates/*",
+		middleware.RequireAuth(jwtObj),
+		globalLimiter,
+		templatesProxy,
+	)
+	app.All("/pdf/*",
+		middleware.RequireAuth(jwtObj),
+		globalLimiter,
+		pdfProxy,
+	)
 
 	app.Get("/healthcheck", func(c *fiber.Ctx) error {
 		return c.SendString("api-gateway is alive")
