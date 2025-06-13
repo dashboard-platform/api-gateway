@@ -137,8 +137,8 @@ func TestRequireAuth_NoToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusUnauthorized, resp.StatusCode)
 
-	bodyBytes := make([]byte, resp.ContentLength)
-	resp.Body.Read(bodyBytes)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
 	result, err := parseJSONBody(bodyBytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "authentication required", result["error"])
@@ -160,8 +160,8 @@ func TestRequireAuth_InvalidToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusUnauthorized, resp.StatusCode)
 
-	bodyBytes := make([]byte, resp.ContentLength)
-	resp.Body.Read(bodyBytes)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
 	result, err := parseJSONBody(bodyBytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "invalid or expired token", result["error"])
@@ -184,9 +184,9 @@ func TestRequireAuth_ValidTokenFromCookie(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 
-	buf := make([]byte, resp.ContentLength)
-	resp.Body.Read(buf)
-	responseText := string(buf)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	responseText := string(bodyBytes)
 	assert.Equal(t, "user123", responseText)
 }
 
@@ -207,9 +207,9 @@ func TestRequireAuth_ValidTokenFromHeader(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 
-	buf := make([]byte, resp.ContentLength)
-	resp.Body.Read(buf)
-	responseText := string(buf)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	responseText := string(bodyBytes)
 	assert.Equal(t, "user123", responseText)
 }
 
@@ -232,9 +232,9 @@ func TestRequireAuth_CookiePrecedence(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusUnauthorized, resp.StatusCode)
 
-	buf := make([]byte, resp.ContentLength)
-	resp.Body.Read(buf)
-	result, err := parseJSONBody(buf)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	result, err := parseJSONBody(bodyBytes)
 	assert.NoError(t, err)
 	assert.Equal(t, "invalid or expired token", result["error"])
 }

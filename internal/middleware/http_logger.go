@@ -56,14 +56,10 @@ func RequestLogger(logger zerolog.Logger) fiber.Handler {
 			Int("status", status).
 			Dur("latency", stop.Sub(start)).
 			Str("ip", c.IP()).
-			Msg("request")
+			Msg(msg)
 
-		if err != nil {
-			return c.Status(status).JSON(fiber.Map{
-				"error": msg,
-			})
-		}
-
-		return nil
+		// Propagate the error if one occurred. Fiber's default error handler
+		// or a subsequent error handling middleware will manage the response.
+		return err
 	}
 }

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/dashboard-platform/api-gateway/internal/config"
@@ -19,7 +22,8 @@ func main() {
 	// Load the configuration from environment variables.
 	c, err := config.Load()
 	if err != nil {
-		return
+		log.Fatal().Err(err).Msg("Failed to load configuration")
+		// os.Exit(1) // log.Fatal() already exits with status 1
 	}
 
 	// Initialize the logger with the loaded configuration
@@ -51,11 +55,11 @@ func main() {
 
 	// JWT object for authentication middleware
 	jwtObj := &middleware.JWTObj{
-		Secret: []byte(c.JWTSecret),
+		Secret: c.JWTSecret,
 	}
 
 	globalLimiter := limiter.New(limiter.Config{
-		Max:        20,
+		Max:        50,
 		Expiration: 1 * time.Minute,
 	})
 
@@ -86,22 +90,38 @@ func main() {
 	app.Get("/healthcheck", func(c *fiber.Ctx) error {
 		return c.SendString("api-gateway is alive")
 	})
-	app.Get("/logout", func(c *fiber.Ctx) error {
-		c.Cookie(&fiber.Cookie{
+	app.Get("/logout", func(ctx *fiber.Ctx) error {
+		ctx.Cookie(&fiber.Cookie{
 			Name:     "access_token",
 			Value:    "",
 			Expires:  time.Now().Add(-1 * time.Hour),
-			Secure:   true,
+			Secure:   c.CookieSecure,
 			HTTPOnly: true,
 			SameSite: "None",
 		})
-		return c.SendStatus(fiber.StatusOK)
+		return ctx.SendStatus(fiber.StatusOK)
 	})
 
-	// Start the HTTP server.
-	log.Info().Msgf("API Gateway started on %s", c.Port)
-	if err = app.Listen(c.Port); err != nil {
-		log.Error().Msgf("Error starting api gateway: %v", err)
-		return
+	// Channel to listen for OS signals
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt) // syscall.SIGINT, syscall.SIGTERM
+
+	// Goroutine to start the server
+	go func() {
+		log.Info().Msgf("API Gateway starting on %s", c.Port)
+		if err := app.Listen(c.Port); err != nil {
+			log.Error().Err(err).Msg("Error starting API gateway")
+			quit <- os.Interrupt // Signal main to exit if server fails to start
+		}
+	}()
+
+	// Wait for an OS signal
+	<-quit
+	log.Info().Msg("Shutting down API Gateway...")
+
+	// Attempt to gracefully shut down the server
+	if err := app.ShutdownWithContext(context.Background()); err != nil {
+		log.Error().Err(err).Msg("Error during server shutdown")
 	}
+	log.Info().Msg("API Gateway gracefully stopped")
 }

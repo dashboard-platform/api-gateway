@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -23,20 +24,14 @@ func New(target string) fiber.Handler {
 
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
-	originalDirector := proxy.Director
-	proxy.Director = func(req *http.Request) {
-		originalDirector(req)
-
-		// Inject X-User-ID
-		if fiberCtx, ok := req.Context().Value("fiber.ctx").(*fiber.Ctx); ok {
-			if userID, exists := fiberCtx.Locals("user_id").(string); exists {
-				req.Header.Set("X-User-ID", userID)
-			}
-		}
-	}
+	// The original director is sufficient if X-User-ID is already set
+	// by the RequireAuth middleware on c.Request().Header, which adaptor.HTTPHandler
+	// should propagate to the http.Request.
+	// proxy.Director remains the default one from NewSingleHostReverseProxy.
 
 	proxy.Transport = &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           (&net.Dialer{Timeout: 5 * time.Second}).DialContext, // Added DialTimeout
 		ResponseHeaderTimeout: 5 * time.Second,
 	}
 

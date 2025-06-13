@@ -6,11 +6,10 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
-	"time"
 
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -49,6 +48,12 @@ const (
 //   - Config: The loaded application configuration.
 //   - error: An error if any required configuration value is missing.
 func Load() (Config, error) {
+	// Initialize logger once, if it's specific to config loading or used by getEnv.
+	// However, it's better if getEnv doesn't log directly but returns errors or relies on a global logger.
+	// For now, let's assume the global logger is initialized in main.
+	// If getEnv needs to log, it should use the global logger.
+	// The per-call logger setup in getEnv was problematic.
+
 	var c Config
 
 	c.Env = os.Getenv(envKey)
@@ -56,61 +61,66 @@ func Load() (Config, error) {
 		c.Env = defaultEnvKey
 	}
 
-	c.Port = getEnv(portEnv)
+	c.Port = getEnv(portEnv, true)
 	if c.Port == "" {
-		return Config{}, errors.New("empty key")
+		return Config{}, errors.New("empty key: " + portEnv)
 	}
 
-	c.FrontendURL = getEnv(frontEndKey)
+	c.FrontendURL = getEnv(frontEndKey, true)
 	if c.FrontendURL == "" {
-		return Config{}, errors.New("empty key")
+		return Config{}, errors.New("empty key: " + frontEndKey)
 	}
 
-	c.AuthServiceURL = getEnv(authServiceKey)
+	c.AuthServiceURL = getEnv(authServiceKey, true)
 	if c.AuthServiceURL == "" {
-		return Config{}, errors.New("empty key")
+		return Config{}, errors.New("empty key: " + authServiceKey)
 	}
 
-	c.TemplateServiceURL = getEnv(templateServiceKey)
+	c.TemplateServiceURL = getEnv(templateServiceKey, true)
 	if c.TemplateServiceURL == "" {
-		return Config{}, errors.New("empty key")
+		return Config{}, errors.New("empty key: " + templateServiceKey)
 	}
 
-	c.PDFServiceURL = getEnv(pdfServiceKey)
+	c.PDFServiceURL = getEnv(pdfServiceKey, true)
 	if c.PDFServiceURL == "" {
-		return Config{}, errors.New("empty key")
+		return Config{}, errors.New("empty key: " + pdfServiceKey)
 	}
 
-	c.JWTSecret = []byte(getEnv(jwtSecretKey))
+	c.JWTSecret = []byte(getEnv(jwtSecretKey, true))
 	if len(c.JWTSecret) == 0 {
-		return Config{}, errors.New("empty key")
+		return Config{}, errors.New("empty key: " + jwtSecretKey)
 	}
 
 	var err error
-	c.CookieSecure, err = strconv.ParseBool(getEnv(cookieSecureKey))
+	cookieSecureStr := getEnv(cookieSecureKey, true)
+	if cookieSecureStr == "" { // Check if getEnv returned empty because the key was missing
+		// This check assumes getEnv logs the error if required and missing,
+		// but Load should still return a distinct error for a missing required key.
+		return Config{}, errors.New("empty key: " + cookieSecureKey)
+	}
+	c.CookieSecure, err = strconv.ParseBool(cookieSecureStr)
 	if err != nil {
-		return Config{}, errors.New("invalid value for COOKIE_SECURE:" + err.Error())
+		return Config{}, fmt.Errorf("invalid value for %s ('%s'): %w", cookieSecureKey, cookieSecureStr, err)
 	}
 
 	return c, nil
 }
 
 // getEnv retrieves the value of an environment variable.
-// If the variable is not set, it logs an error and returns an empty string.
+// If the variable is not set and 'required' is true, it logs an error.
 //
 // Parameters:
 //   - key: The name of the environment variable to retrieve.
+//   - required: A boolean indicating if the environment variable is required.
 //
 // Returns:
 //   - string: The value of the environment variable, or an empty string if not set.
-func getEnv(key string) string {
-	log.Logger = log.Output(zerolog.ConsoleWriter{
-		Out:        os.Stdout,
-		TimeFormat: time.RFC3339,
-	})
-
+func getEnv(key string, required bool) string {
 	val := os.Getenv(key)
-	if val == "" {
+	if val == "" && required {
+		// Use the globally configured logger from the main package or logger package.
+		// Avoid reconfiguring the logger here.
+		// This log message will use the logger configured in main.
 		log.Error().Str("var", key).Msg("Failed to load environment")
 	}
 	return val
